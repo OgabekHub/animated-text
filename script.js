@@ -186,11 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
     100% { transform: translateY(-10px); }
 }`,
         typing: (primary, secondary, speed, textColor) => `/* Typewriter Console Uslubi */
-.text-display {
-    position: relative;
-}
-
-.text-display::after {
+.text-display .text-line:last-child::after {
     content: '_';
     color: ${secondary};
     font-weight: bold;

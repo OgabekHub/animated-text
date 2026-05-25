@@ -390,7 +390,7 @@ body::after {
     text-shadow: 0 0 8px var(--color-secondary);
 }
 
-.text-display.effect-typing::after {
+.effect-typing .text-line:last-child::after {
     content: '_';
     color: var(--color-secondary);
     font-weight: bold;
