@@ -1,26 +1,228 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Premium Text Animation Studio - OgabekHub</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
-    <h1>
-        <span>H</span>
-        <span>E</span>
-        <span>L</span>
-        <span>L</span>
-        <span>O</span>
-        <span>!</span>
-        <span>W</span>
-        <span>O</span>
-        <span>R</span>
-        <span>L</span>
-        <span>D</span>
-    </h1>
 
+    <div class="studio-app">
+        <!-- HEADER -->
+        <header class="studio-header">
+            <div class="logo-section">
+                <h1>
+                    <span>✨</span> Text Animation Studio
+                    <span class="logo-badge">v2.0 Premium</span>
+                </h1>
+            </div>
+            <div class="header-info">
+                <span style="color: var(--text-muted); font-size: 0.85rem;">OgabekHub / Animated-Text</span>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="main-content">
+            
+            <!-- PREVIEW (CHAP TOMON) -->
+            <section class="preview-arena" id="previewArena">
+                <div class="arena-grid"></div>
+                
+                <!-- Fon Boshqaruvi -->
+                <div class="arena-controls">
+                    <button class="arena-btn active" data-bg="dark">🌑 Qorong'u</button>
+                    <button class="arena-btn" data-bg="light">☀️ Yorug'</button>
+                    <button class="arena-btn" data-bg="grid">🏁 Katakli</button>
+                    <button class="arena-btn" data-bg="mesh">🌌 Mesh</button>
+                </div>
+
+                <div class="preview-wrapper">
+                    <div class="text-display effect-bounce" id="textDisplay">
+                        <!-- Harflar bu erga JS orqali qo'shiladi -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONTROLS (O'NG TOMON) -->
+            <section class="control-panel">
+                
+                <!-- Matn Kiritish -->
+                <div class="panel-section">
+                    <h2>Matnni O'zgartirish</h2>
+                    <div class="text-input-wrapper">
+                        <input type="text" id="textInput" class="studio-input" value="HELLO! WORLD" placeholder="Matn kiriting..." maxlength="30">
+                    </div>
+                </div>
+
+                <!-- Animatsiya Effektlari -->
+                <div class="panel-section">
+                    <h2>Animatsiya Effektini Tanlash</h2>
+                    <div class="effects-grid" id="effectsGrid">
+                        <div class="effect-card active" data-effect="bounce">
+                            <div class="card-title">3D Bounce</div>
+                            <div class="card-desc">3D Sakrash & Soya</div>
+                        </div>
+                        <div class="effect-card" data-effect="neon">
+                            <div class="card-title">Neon Cyber</div>
+                            <div class="card-desc">Neon Chaqnash</div>
+                        </div>
+                        <div class="effect-card" data-effect="glitch">
+                            <div class="card-title">RGB Glitch</div>
+                            <div class="card-desc">Kiber Nosozlik</div>
+                        </div>
+                        <div class="effect-card" data-effect="wave">
+                            <div class="card-title">Liquid Wave</div>
+                            <div class="card-desc">Suyuq To'lqin</div>
+                        </div>
+                        <div class="effect-card" data-effect="typing">
+                            <div class="card-title">Typewriter</div>
+                            <div class="card-desc">Yozuv Mashinkasi</div>
+                        </div>
+                        <div class="effect-card" data-effect="fire">
+                            <div class="card-title">Ember Fire</div>
+                            <div class="card-desc">Olov va Cho'g'</div>
+                        </div>
+                        <div class="effect-card" data-effect="flip">
+                            <div class="card-title">Origami 3D</div>
+                            <div class="card-desc">3D Burilish</div>
+                        </div>
+                        <div class="effect-card" data-effect="shimmer">
+                            <div class="card-title">Gold Shimmer</div>
+                            <div class="card-desc">Oltin Yaltirash</div>
+                        </div>
+                        <div class="effect-card" data-effect="smoke">
+                            <div class="card-title">Mystic Smoke</div>
+                            <div class="card-desc">Tutunli Tarqalish</div>
+                        </div>
+                        <div class="effect-card" data-effect="rainbow">
+                            <div class="card-title">Rainbow Flow</div>
+                            <div class="card-desc">Kamalak Jilosi</div>
+                        </div>
+                        <div class="effect-card" data-effect="rotate3d">
+                            <div class="card-title">Cosmic Rotate</div>
+                            <div class="card-desc">3D Fazoviy Aylanish</div>
+                        </div>
+                        <div class="effect-card" data-effect="elastic">
+                            <div class="card-title">Elastic Pop</div>
+                            <div class="card-desc">Elastik Sakrash</div>
+                        </div>
+                        <div class="effect-card" data-effect="reveal">
+                            <div class="card-title">Light Reveal</div>
+                            <div class="card-desc">Yorug'lik Slaydi</div>
+                        </div>
+                        <div class="effect-card" data-effect="matrix">
+                            <div class="card-title">Matrix Rain</div>
+                            <div class="card-desc">Kiber Matrix</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shrift Sozlamalari -->
+                <div class="panel-section">
+                    <h2>Typography (Shrift Sozlamalari)</h2>
+                    <div class="control-group">
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <span>Shrift Turi</span>
+                            </div>
+                            <select id="fontSelect" class="studio-select">
+                                <option value="'Outfit', sans-serif" selected>Outfit (Minimalist)</option>
+                                <option value="'Space Grotesk', sans-serif">Space Grotesk (Kiberpank)</option>
+                                <option value="'Playfair Display', serif">Playfair Display (Klassik)</option>
+                                <option value="'Bungee', sans-serif">Bungee (Qalin/Multfilm)</option>
+                                <option value="'Rubik Glitch', system-ui">Rubik Glitch (Nosoz raqamli)</option>
+                                <option value="'Cinzel Decorative', serif">Cinzel (Dekorativ)</option>
+                                <option value="'Ubuntu Mono', monospace">Ubuntu Mono (Dasturchi foni)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <span>Shrift O'lchami</span>
+                                <span class="setting-val" id="fontSizeVal">4.5rem</span>
+                            </div>
+                            <input type="range" id="fontSizeRange" class="studio-range" min="1.5" max="8.0" step="0.1" value="4.5">
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <span>Harflar Oralig'i</span>
+                                <span class="setting-val" id="letterSpacingVal">0px</span>
+                            </div>
+                            <input type="range" id="letterSpacingRange" class="studio-range" min="-10" max="30" step="1" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Animatsiya Nozik Sozlamalari -->
+                <div class="panel-section">
+                    <h2>Animatsiya Parametrlari</h2>
+                    <div class="control-group">
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <span>Animatsiya Tezligi (Davomiyligi)</span>
+                                <span class="setting-val" id="speedVal">0.6s</span>
+                            </div>
+                            <input type="range" id="speedRange" class="studio-range" min="0.1" max="2.5" step="0.05" value="0.6">
+                        </div>
+
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <span>Harflar Kechikish Farqi (Delay Gap)</span>
+                                <span class="setting-val" id="delayVal">0.08s</span>
+                            </div>
+                            <input type="range" id="delayRange" class="studio-range" min="0.01" max="0.5" step="0.01" value="0.08">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ranglar Sozlamalari -->
+                <div class="panel-section">
+                    <h2>Rang Sozlamalari</h2>
+                    <div class="color-picker-grid">
+                        <div class="color-input-wrapper">
+                            <input type="color" id="textColor" class="studio-color" value="#ffffff">
+                            <label for="textColor">Matn Rangi</label>
+                        </div>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="primaryColor" class="studio-color" value="#ff007f">
+                            <label for="primaryColor">Asosiy Rang</label>
+                        </div>
+                        <div class="color-input-wrapper">
+                            <input type="color" id="secondaryColor" class="studio-color" value="#00ffff">
+                            <label for="secondaryColor">Yordamchi Rang</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kod Eksport Qilish -->
+                <div class="panel-section">
+                    <h2>Loyihaga Olish (Kodlarni nusxalash)</h2>
+                    <div class="export-panel">
+                        <div class="export-tabs">
+                            <button class="tab-btn active" data-tab="html">HTML kod</button>
+                            <button class="tab-btn" data-tab="css">CSS kod</button>
+                        </div>
+                        <div class="code-container">
+                            <button class="copy-btn" id="copyBtn">
+                                <span>📋 Nusxalash</span>
+                            </button>
+                            <pre class="code-pre"><code id="codeOutput"></code></pre>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Toast Xabar oynasi -->
+    <div class="toast-msg" id="toastMsg">
+        <span>✅</span> Kod nusxalandi!
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
