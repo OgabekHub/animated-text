@@ -15,19 +15,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const primaryColor = document.getElementById("primaryColor");
     const secondaryColor = document.getElementById("secondaryColor");
     const textColor = document.getElementById("textColor");
+    const textColorLabel = document.getElementById("textColorLabel");
+    const gradientToggle = document.getElementById("gradientToggle");
+    const textGradColor = document.getElementById("textGradColor");
+    const gradColorWrapper = document.getElementById("gradColorWrapper");
+    const gradAngleRange = document.getElementById("gradAngleRange");
+    const gradAngleRow = document.getElementById("gradAngleRow");
+    const gradAngleVal = document.getElementById("gradAngleVal");
     const previewArena = document.getElementById("previewArena");
     
     // Kod Eksport & Tabs
     const codeOutput = document.getElementById("codeOutput");
     const copyBtn = document.getElementById("copyBtn");
+    const shareBtn = document.getElementById("shareBtn");
+    const codepenBtn = document.getElementById("codepenBtn");
     const tabBtns = document.querySelectorAll(".tab-btn");
     const arenaBtns = document.querySelectorAll(".arena-btn");
     const toastMsg = document.getElementById("toastMsg");
+    const alignBtns = document.querySelectorAll(".align-btn");
+    const presetsGrid = document.getElementById("presetsGrid");
+    const splitSelect = document.getElementById("splitSelect");
+    const particleCanvas = document.getElementById("particleCanvas");
 
     // Hozirgi holat (State)
     let currentEffect = "bounce";
     let activeTab = "html";
     let arenaBackground = "dark";
+    let currentAlign = "center";
+
+    // Zarrachalar foni holati
+    let ctx = null;
+    let particles = [];
+    let particleAnimId = null;
+    let isParticleActive = false;
 
     // CSS animatsiyalar shablonlari (Eksport qilish uchun)
     const animationTemplates = {
@@ -461,32 +481,78 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const delayOffset = parseFloat(delayRange.value);
         const baseSpeed = parseFloat(speedRange.value);
+        const splitMode = splitSelect.value;
 
-        text.split("").forEach((char, index) => {
-            const span = document.createElement("span");
+        const lines = text.split("\n");
+        let animIndex = 0;
+
+        lines.forEach((lineText) => {
+            const lineDiv = document.createElement("div");
+            lineDiv.className = "text-line";
             
-            // Bo'sh joylar uchun maxsus belgi (space)
-            if (char === " ") {
-                span.innerHTML = "&nbsp;";
+            if (lineText.length === 0) {
+                lineDiv.innerHTML = "&nbsp;";
             } else {
-                span.innerText = char;
-            }
-            
-            // CSS Glitch effekti uchun attribute
-            if (currentEffect === "glitch") {
-                span.setAttribute("data-char", char === " " ? " " : char);
-            }
-            
-            // Har bir harf uchun kechikish vaqti
-            const delayValue = (index * delayOffset).toFixed(3);
-            span.style.setProperty("--delay", `${delayValue}s`);
+                if (splitMode === "word") {
+                    const words = lineText.split(" ");
+                    words.forEach((wordText, wordIdx) => {
+                        if (wordText.length === 0 && wordIdx < words.length - 1) {
+                            const spaceSpan = document.createElement("span");
+                            spaceSpan.innerHTML = "&nbsp;";
+                            lineDiv.appendChild(spaceSpan);
+                            return;
+                        }
 
-            // Har bir harf uchun har xil tezlik (original loyihadagidek)
-            const speedFactor = [0, 0.05, 0.1, 0.15, 0.1, 0.05][index % 6];
-            const durationValue = (baseSpeed + speedFactor).toFixed(3);
-            span.style.setProperty("--duration", `${durationValue}s`);
-            
-            textDisplay.appendChild(span);
+                        const span = document.createElement("span");
+                        span.innerText = wordText;
+                        
+                        if (currentEffect === "glitch") {
+                            span.setAttribute("data-char", wordText);
+                        }
+                        
+                        const delayValue = (animIndex * delayOffset).toFixed(3);
+                        span.style.setProperty("--delay", `${delayValue}s`);
+
+                        const speedFactor = [0, 0.05, 0.1, 0.15, 0.1, 0.05][animIndex % 6];
+                        const durationValue = (baseSpeed + speedFactor).toFixed(3);
+                        span.style.setProperty("--duration", `${durationValue}s`);
+                        
+                        lineDiv.appendChild(span);
+                        animIndex++;
+                        
+                        if (wordIdx < words.length - 1) {
+                            const spaceSpan = document.createElement("span");
+                            spaceSpan.innerHTML = "&nbsp;";
+                            lineDiv.appendChild(spaceSpan);
+                        }
+                    });
+                } else {
+                    lineText.split("").forEach((char) => {
+                        const span = document.createElement("span");
+                        
+                        if (char === " ") {
+                            span.innerHTML = "&nbsp;";
+                        } else {
+                            span.innerText = char;
+                        }
+                        
+                        if (currentEffect === "glitch") {
+                            span.setAttribute("data-char", char === " " ? " " : char);
+                        }
+                        
+                        const delayValue = (animIndex * delayOffset).toFixed(3);
+                        span.style.setProperty("--delay", `${delayValue}s`);
+
+                        const speedFactor = [0, 0.05, 0.1, 0.15, 0.1, 0.05][animIndex % 6];
+                        const durationValue = (baseSpeed + speedFactor).toFixed(3);
+                        span.style.setProperty("--duration", `${durationValue}s`);
+                        
+                        lineDiv.appendChild(span);
+                        animIndex++;
+                    });
+                }
+            }
+            textDisplay.appendChild(lineDiv);
         });
 
         // Agar Typewriter bo'lsa, animatsiyani to'liq qaytadan ishga tushirish uchun klassni o'chirib yoqamiz
@@ -512,6 +578,26 @@ document.addEventListener("DOMContentLoaded", () => {
         root.style.setProperty("--color-primary", primaryColor.value);
         root.style.setProperty("--color-secondary", secondaryColor.value);
 
+        // Gradient matn ranglari boshqaruvi
+        if (gradientToggle.checked) {
+            root.style.setProperty("--text-background", `linear-gradient(${gradAngleRange.value}deg, ${textColor.value}, ${textGradColor.value})`);
+            root.style.setProperty("--text-clip", "text");
+            root.style.setProperty("--text-fill", "transparent");
+            
+            gradColorWrapper.style.display = "flex";
+            gradAngleRow.style.display = "flex";
+            textColorLabel.innerText = "Gradient 1-Rangi";
+            gradAngleVal.innerText = `${gradAngleRange.value}°`;
+        } else {
+            root.style.setProperty("--text-background", "none");
+            root.style.setProperty("--text-clip", "unset");
+            root.style.setProperty("--text-fill", "inherit");
+            
+            gradColorWrapper.style.display = "none";
+            gradAngleRow.style.display = "none";
+            textColorLabel.innerText = "Matn Rangi";
+        }
+
         // UI text val-larni yangilash
         fontSizeVal.innerText = `${fontSizeRange.value}rem`;
         letterSpacingVal.innerText = `${letterSpacingRange.value}px`;
@@ -519,6 +605,297 @@ document.addEventListener("DOMContentLoaded", () => {
         delayVal.innerText = `${delayRange.value}s`;
 
         updateCodeOutput();
+        serializeState();
+    }
+
+    // Preset shablonlar konfiguratsiyasi
+    const presetConfigs = {
+        cyberpunk: {
+            effect: "glitch",
+            font: "'Space Grotesk', sans-serif",
+            size: "4.5",
+            spacing: "2",
+            speed: "0.5",
+            delay: "0.05",
+            textColor: "#ffff00",
+            primary: "#ff0055",
+            secondary: "#00ffff",
+            gradient: false,
+            split: "char"
+        },
+        neoncyber: {
+            effect: "neon",
+            font: "'Space Grotesk', sans-serif",
+            size: "4.5",
+            spacing: "0",
+            speed: "0.8",
+            delay: "0.08",
+            textColor: "#ffffff",
+            primary: "#ff007f",
+            secondary: "#00ffff",
+            gradient: false,
+            split: "char"
+        },
+        goldluxury: {
+            effect: "shimmer",
+            font: "'Playfair Display', serif",
+            size: "5.0",
+            spacing: "1",
+            speed: "0.8",
+            delay: "0.06",
+            textColor: "#ffe066",
+            primary: "#d4af37",
+            secondary: "#aa7c11",
+            gradient: true,
+            textGradColor: "#aa7c11",
+            gradAngle: "45",
+            split: "char"
+        },
+        sunsetwave: {
+            effect: "wave",
+            font: "'Outfit', sans-serif",
+            size: "4.5",
+            spacing: "0",
+            speed: "1.0",
+            delay: "0.15",
+            textColor: "#ff3e00",
+            primary: "#ff007f",
+            secondary: "#ff9900",
+            gradient: true,
+            textGradColor: "#ff007f",
+            gradAngle: "90",
+            split: "word"
+        },
+        matrixcode: {
+            effect: "matrix",
+            font: "'Ubuntu Mono', monospace",
+            size: "4.0",
+            spacing: "0",
+            speed: "0.4",
+            delay: "0.04",
+            textColor: "#ffffff",
+            primary: "#00ff00",
+            secondary: "#008000",
+            gradient: false,
+            split: "char"
+        }
+    };
+
+    function applyPreset(name) {
+        const config = presetConfigs[name];
+        if (!config) return;
+
+        // Apply config to state & UI inputs
+        currentEffect = config.effect;
+        fontSelect.value = config.font;
+        fontSizeRange.value = config.size;
+        letterSpacingRange.value = config.spacing;
+        speedRange.value = config.speed;
+        delayRange.value = config.delay;
+        textColor.value = config.textColor;
+        primaryColor.value = config.primary;
+        secondaryColor.value = config.secondary;
+        splitSelect.value = config.split || "char";
+
+        if (config.gradient) {
+            gradientToggle.checked = true;
+            textGradColor.value = config.textGradColor;
+            gradAngleRange.value = config.gradAngle;
+        } else {
+            gradientToggle.checked = false;
+        }
+
+        // Update active classes in effectsGrid
+        document.querySelectorAll(".effect-card").forEach(card => {
+            if (card.dataset.effect === currentEffect) {
+                card.classList.add("active");
+            } else {
+                card.classList.remove("active");
+            }
+        });
+
+        // Update preview class
+        textDisplay.className = `text-display effect-${currentEffect} text-${currentAlign}`;
+
+        // Trigger updates
+        updateCSSVariables();
+        updateTextDisplay();
+    }
+
+    function clearActivePresets() {
+        document.querySelectorAll(".preset-card").forEach(c => c.classList.remove("active"));
+    }
+
+    function serializeState() {
+        const state = {
+            t: textInput.value,
+            e: currentEffect,
+            f: fontSelect.value,
+            s: fontSizeRange.value,
+            ls: letterSpacingRange.value,
+            sp: speedRange.value,
+            d: delayRange.value,
+            tc: textColor.value,
+            p: primaryColor.value,
+            sec: secondaryColor.value,
+            g: gradientToggle.checked,
+            tgc: textGradColor.value,
+            ga: gradAngleRange.value,
+            a: currentAlign,
+            sm: splitSelect.value
+        };
+        try {
+            const jsonStr = JSON.stringify(state);
+            const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+            history.replaceState(null, null, `#${base64}`);
+        } catch (e) {
+            console.error("State serialization failed", e);
+        }
+    }
+
+    function deserializeState() {
+        const hash = window.location.hash.substring(1);
+        if (!hash) return;
+        try {
+            const jsonStr = decodeURIComponent(escape(atob(hash)));
+            const state = JSON.parse(jsonStr);
+
+            if (state.t !== undefined) textInput.value = state.t;
+            if (state.e !== undefined) currentEffect = state.e;
+            if (state.f !== undefined) fontSelect.value = state.f;
+            if (state.s !== undefined) fontSizeRange.value = state.s;
+            if (state.ls !== undefined) letterSpacingRange.value = state.ls;
+            if (state.sp !== undefined) speedRange.value = state.sp;
+            if (state.d !== undefined) delayRange.value = state.d;
+            if (state.tc !== undefined) textColor.value = state.tc;
+            if (state.p !== undefined) primaryColor.value = state.p;
+            if (state.sec !== undefined) secondaryColor.value = state.sec;
+            if (state.g !== undefined) gradientToggle.checked = state.g;
+            if (state.tgc !== undefined) textGradColor.value = state.tgc;
+            if (state.ga !== undefined) gradAngleRange.value = state.ga;
+            if (state.a !== undefined) currentAlign = state.a;
+            if (state.sm !== undefined) splitSelect.value = state.sm;
+
+            // Update alignment active buttons
+            document.querySelectorAll(".align-btn").forEach(btn => {
+                if (btn.dataset.align === currentAlign) {
+                    btn.classList.add("active");
+                } else {
+                    btn.classList.remove("active");
+                }
+            });
+
+            // Update effect active cards
+            document.querySelectorAll(".effect-card").forEach(card => {
+                if (card.dataset.effect === currentEffect) {
+                    card.classList.add("active");
+                } else {
+                    card.classList.remove("active");
+                }
+            });
+
+            // Preview alignment & effect update
+            textDisplay.className = `text-display effect-${currentEffect} text-${currentAlign}`;
+        } catch (e) {
+            console.error("State deserialization failed", e);
+        }
+    }
+
+    // Zarrachalar animatsiya tizimi
+    class Particle {
+        constructor(width, height) {
+            this.width = width;
+            this.height = height;
+            this.reset();
+        }
+
+        reset() {
+            this.x = Math.random() * this.width;
+            this.y = Math.random() * this.height;
+            this.vx = (Math.random() - 0.5) * 1.2;
+            this.vy = (Math.random() - 0.5) * 1.2;
+            this.size = Math.random() * 2.5 + 1;
+            this.alpha = Math.random() * 0.4 + 0.2;
+            this.color = Math.random() > 0.5 ? primaryColor.value : secondaryColor.value;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            
+            if (this.x < 0 || this.x > this.width || this.y < 0 || this.y > this.height) {
+                this.reset();
+            }
+        }
+
+        draw(c) {
+            c.save();
+            c.globalAlpha = this.alpha;
+            c.fillStyle = this.color;
+            c.beginPath();
+            c.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            c.fill();
+            c.restore();
+        }
+    }
+
+    function initParticles() {
+        ctx = particleCanvas.getContext("2d");
+        resizeCanvas();
+        particles = [];
+        for (let i = 0; i < 70; i++) {
+            particles.push(new Particle(particleCanvas.width, particleCanvas.height));
+        }
+        isParticleActive = true;
+        particleCanvas.style.display = "block";
+        animateParticles();
+    }
+
+    function resizeCanvas() {
+        if (!particleCanvas) return;
+        const rect = previewArena.getBoundingClientRect();
+        particleCanvas.width = rect.width;
+        particleCanvas.height = rect.height;
+    }
+
+    function animateParticles() {
+        if (!isParticleActive) return;
+        
+        ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+        
+        // Zarrachalarni o'zaro bog'lash chiziqlari (Constellation)
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+        ctx.lineWidth = 0.5;
+        
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw(ctx);
+            
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+        
+        particleAnimId = requestAnimationFrame(animateParticles);
+    }
+
+    function stopParticles() {
+        isParticleActive = false;
+        if (particleAnimId) {
+            cancelAnimationFrame(particleAnimId);
+            particleAnimId = null;
+        }
+        if (particleCanvas) {
+            particleCanvas.style.display = "none";
+        }
     }
     // HTML/CSS Kodini generatsiya qilish
     function updateCodeOutput() {
@@ -534,25 +911,67 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (activeTab === "html") {
             // HTML Eksport generatsiyasi
-            let htmlCode = `<!-- Animatsion Matn -->\n<div class="text-display effect-${currentEffect}">\n`;
-            
-            text.split("").forEach((char, index) => {
-                const delayValue = (index * delayOffset).toFixed(3);
-                const speedFactor = [0, 0.05, 0.1, 0.15, 0.1, 0.05][index % 6];
-                const durationValue = (speedValue + speedFactor).toFixed(3);
-                const safeChar = char === " " ? "&nbsp;" : char;
-                
-                let styleStr = `--delay: ${delayValue}s;`;
-                if (currentEffect === "bounce") {
-                    styleStr += ` --duration: ${durationValue}s;`;
-                }
+            let htmlCode = `<!-- Animatsion Matn -->\n<div class="text-display effect-${currentEffect} text-${currentAlign}">\n`;
+            const lines = text.split("\n");
+            const splitMode = splitSelect.value;
+            let animIndex = 0;
 
-                if (currentEffect === "glitch") {
-                    const attrChar = char === " " ? " " : char;
-                    htmlCode += `    <span style="${styleStr}" data-char="${attrChar}">${safeChar}</span>\n`;
+            lines.forEach((lineText) => {
+                htmlCode += `    <div class="text-line">\n`;
+                if (lineText.length === 0) {
+                    htmlCode += `        &nbsp;\n`;
                 } else {
-                    htmlCode += `    <span style="${styleStr}">${safeChar}</span>\n`;
+                    if (splitMode === "word") {
+                        const words = lineText.split(" ");
+                        words.forEach((wordText, wordIdx) => {
+                            if (wordText.length === 0 && wordIdx < words.length - 1) {
+                                htmlCode += `        <span>&nbsp;</span>\n`;
+                                return;
+                            }
+
+                            const delayValue = (animIndex * delayOffset).toFixed(3);
+                            const speedFactor = [0, 0.05, 0.1, 0.15, 0.1, 0.05][animIndex % 6];
+                            const durationValue = (speedValue + speedFactor).toFixed(3);
+                            
+                            let styleStr = `--delay: ${delayValue}s;`;
+                            if (currentEffect === "bounce") {
+                                styleStr += ` --duration: ${durationValue}s;`;
+                            }
+
+                            if (currentEffect === "glitch") {
+                                htmlCode += `        <span style="${styleStr}" data-char="${wordText}">${wordText}</span>\n`;
+                            } else {
+                                htmlCode += `        <span style="${styleStr}">${wordText}</span>\n`;
+                            }
+                            animIndex++;
+
+                            if (wordIdx < words.length - 1) {
+                                htmlCode += `        <span>&nbsp;</span>\n`;
+                            }
+                        });
+                    } else {
+                        lineText.split("").forEach((char) => {
+                            const delayValue = (animIndex * delayOffset).toFixed(3);
+                            const speedFactor = [0, 0.05, 0.1, 0.15, 0.1, 0.05][animIndex % 6];
+                            const durationValue = (speedValue + speedFactor).toFixed(3);
+                            const safeChar = char === " " ? "&nbsp;" : char;
+                            
+                            let styleStr = `--delay: ${delayValue}s;`;
+                            if (currentEffect === "bounce") {
+                                styleStr += ` --duration: ${durationValue}s;`;
+                            }
+
+                            if (currentEffect === "glitch") {
+                                const attrChar = char === " " ? " " : char;
+                                htmlCode += `        <span style="${styleStr}" data-char="${attrChar}">${safeChar}</span>\n`;
+                            } else {
+                                htmlCode += `        <span style="${styleStr}">${safeChar}</span>\n`;
+                            }
+                            animIndex++;
+                        });
+                    }
                 }
+                htmlCode += `    </div>\n`;
             });
             
             htmlCode += `</div>`;
@@ -564,8 +983,31 @@ document.addEventListener("DOMContentLoaded", () => {
             cssCode += `    font-family: ${fontValue};\n`;
             cssCode += `    font-size: ${sizeValue}rem;\n`;
             cssCode += `    letter-spacing: ${spacingValue}px;\n`;
-            cssCode += `    line-height: 1.2;\n`;
+            cssCode += `    line-height: 1.4;\n`;
             cssCode += `    display: inline-block;\n`;
+            cssCode += `    width: 100%;\n`;
+            cssCode += `}\n\n`;
+            cssCode += `.text-line {\n`;
+            cssCode += `    display: block;\n`;
+            cssCode += `    text-align: inherit;\n`;
+            cssCode += `    width: 100%;\n`;
+            cssCode += `}\n\n`;
+            cssCode += `.text-display.text-left { text-align: left; }\n`;
+            cssCode += `.text-display.text-center { text-align: center; }\n`;
+            cssCode += `.text-display.text-right { text-align: right; }\n\n`;
+
+            cssCode += `/* Har bir harf */\n`;
+            cssCode += `.text-display span {\n`;
+            cssCode += `    display: inline-block;\n`;
+            cssCode += `    position: relative;\n`;
+            cssCode += `    white-space: pre;\n`;
+            cssCode += `    animation-delay: var(--delay);\n`;
+            if (gradientToggle.checked) {
+                cssCode += `    background: linear-gradient(${gradAngleRange.value}deg, ${textCol}, ${textGradColor.value});\n`;
+                cssCode += `    -webkit-background-clip: text;\n`;
+                cssCode += `    background-clip: text;\n`;
+                cssCode += `    -webkit-text-fill-color: transparent;\n`;
+            }
             cssCode += `}\n\n`;
 
             // Animatsiya turiga qarab CSS keyframes va qo'shimcha elementlarni qo'shish
@@ -578,25 +1020,69 @@ document.addEventListener("DOMContentLoaded", () => {
     // EVENT LISTENERS
 
     // Matn o'zgarganda
-    textInput.addEventListener("input", updateTextDisplay);
+    textInput.addEventListener("input", () => {
+        clearActivePresets();
+        updateTextDisplay();
+    });
 
     // Sozlamalar (slayder, select, rang) o'zgarganda
-    fontSelect.addEventListener("change", updateCSSVariables);
-    fontSizeRange.addEventListener("input", updateCSSVariables);
-    letterSpacingRange.addEventListener("input", updateCSSVariables);
-    speedRange.addEventListener("input", updateCSSVariables);
+    fontSelect.addEventListener("change", () => {
+        clearActivePresets();
+        updateCSSVariables();
+    });
+    splitSelect.addEventListener("change", () => {
+        clearActivePresets();
+        updateCSSVariables();
+        updateTextDisplay();
+    });
+    fontSizeRange.addEventListener("input", () => {
+        clearActivePresets();
+        updateCSSVariables();
+    });
+    letterSpacingRange.addEventListener("input", () => {
+        clearActivePresets();
+        updateCSSVariables();
+    });
+    speedRange.addEventListener("input", () => {
+        clearActivePresets();
+        updateCSSVariables();
+    });
     delayRange.addEventListener("input", () => {
+        clearActivePresets();
         updateCSSVariables();
         updateTextDisplay(); // Delay gap o'zgarganda spans-larni qayta qurish kerak
     });
-    textColor.addEventListener("input", updateCSSVariables);
-    primaryColor.addEventListener("input", updateCSSVariables);
-    secondaryColor.addEventListener("input", updateCSSVariables);
+    textColor.addEventListener("input", () => {
+        clearActivePresets();
+        updateCSSVariables();
+    });
+    primaryColor.addEventListener("input", () => {
+        clearActivePresets();
+        updateCSSVariables();
+    });
+    secondaryColor.addEventListener("input", () => {
+        clearActivePresets();
+        updateCSSVariables();
+    });
+    gradientToggle.addEventListener("change", () => {
+        clearActivePresets();
+        updateCSSVariables();
+    });
+    textGradColor.addEventListener("input", () => {
+        clearActivePresets();
+        updateCSSVariables();
+    });
+    gradAngleRange.addEventListener("input", () => {
+        clearActivePresets();
+        updateCSSVariables();
+    });
 
     // Animatsiya kartasini tanlash
     effectsGrid.addEventListener("click", (e) => {
         const card = e.target.closest(".effect-card");
         if (!card) return;
+
+        clearActivePresets();
 
         // Oldingi faol kartani o'chirish
         document.querySelector(".effect-card.active").classList.remove("active");
@@ -622,6 +1108,33 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Matn tekislash hodisalari
+    alignBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            clearActivePresets();
+            document.querySelector(".align-btn.active").classList.remove("active");
+            btn.classList.add("active");
+            currentAlign = btn.dataset.align;
+
+            // Preview alignment
+            textDisplay.classList.remove("text-left", "text-center", "text-right");
+            textDisplay.classList.add(`text-${currentAlign}`);
+
+            updateCodeOutput();
+        });
+    });
+
+    // Preset tanlash hodisasi
+    presetsGrid.addEventListener("click", (e) => {
+        const card = e.target.closest(".preset-card");
+        if (!card) return;
+
+        clearActivePresets();
+        card.classList.add("active");
+        const presetName = card.dataset.preset;
+        applyPreset(presetName);
+    });
+
     // Fonni o'zgartirish
     arenaBtns.forEach(btn => {
         btn.addEventListener("click", () => {
@@ -630,6 +1143,8 @@ document.addEventListener("DOMContentLoaded", () => {
             arenaBackground = btn.dataset.bg;
 
             // Preview orqasi rangini o'zgartirish
+            stopParticles();
+
             if (arenaBackground === "dark") {
                 previewArena.style.backgroundColor = "var(--color-bg)";
                 previewArena.style.backgroundImage = "none";
@@ -642,8 +1157,19 @@ document.addEventListener("DOMContentLoaded", () => {
             } else if (arenaBackground === "mesh") {
                 previewArena.style.backgroundColor = "#020617";
                 previewArena.style.backgroundImage = "radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.3) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.3) 0px, transparent 50%)";
+            } else if (arenaBackground === "particles") {
+                previewArena.style.backgroundColor = "#080b11";
+                previewArena.style.backgroundImage = "none";
+                initParticles();
             }
         });
+    });
+
+    // Oyna o'lchami o'zgarganda canvasni moslashtirish
+    window.addEventListener("resize", () => {
+        if (isParticleActive) {
+            resizeCanvas();
+        }
     });
 
     // Kodni clipboard-ga nusxalash
@@ -666,7 +1192,179 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Loyihani ulashish (Loyiha havolasini olish)
+    shareBtn.addEventListener("click", () => {
+        serializeState();
+        const shareUrl = window.location.href;
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            shareBtn.classList.add("shared");
+            shareBtn.innerHTML = "<span>✅</span> Havola olindi!";
+            
+            toastMsg.innerHTML = "<span>✅</span> Loyiha havolasi clipboardga nusxalandi!";
+            toastMsg.classList.add("show");
+
+            setTimeout(() => {
+                shareBtn.classList.remove("shared");
+                shareBtn.innerHTML = "<span>🔗</span> Ulashish";
+                toastMsg.classList.remove("show");
+            }, 2000);
+        }).catch(err => {
+            console.error("Nusxalashda xatolik: ", err);
+        });
+    });
+
+    // CodePen-ga eksport qilish
+    codepenBtn.addEventListener("click", () => {
+        const text = textInput.value || " ";
+        const delayOffset = parseFloat(delayRange.value);
+        const speedValue = parseFloat(speedRange.value);
+        const splitMode = splitSelect.value;
+        
+        let htmlCode = `<!-- Google Fonts Import (HTML) -->\n`;
+        htmlCode += `<link rel="preconnect" href="https://fonts.googleapis.com">\n`;
+        htmlCode += `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n`;
+        htmlCode += `<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Cinzel+Decorative:wght@700&family=Outfit:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Rubik+Glitch&family=Space+Grotesk:wght@500;700&family=Ubuntu+Mono&display=swap" rel="stylesheet">\n\n`;
+        htmlCode += `<div class="text-display effect-${currentEffect} text-${currentAlign}">\n`;
+        
+        const lines = text.split("\n");
+        let animIndex = 0;
+        lines.forEach((lineText) => {
+            htmlCode += `    <div class="text-line">\n`;
+            if (lineText.length === 0) {
+                htmlCode += `        &nbsp;\n`;
+            } else {
+                if (splitMode === "word") {
+                    const words = lineText.split(" ");
+                    words.forEach((wordText, wordIdx) => {
+                        if (wordText.length === 0 && wordIdx < words.length - 1) {
+                            htmlCode += `        <span>&nbsp;</span>\n`;
+                            return;
+                        }
+                        const delayVal = (animIndex * delayOffset).toFixed(3);
+                        const speedFactor = [0, 0.05, 0.1, 0.15, 0.1, 0.05][animIndex % 6];
+                        const durationValue = (speedValue + speedFactor).toFixed(3);
+                        
+                        let styleStr = `--delay: ${delayVal}s;`;
+                        if (currentEffect === "bounce") {
+                            styleStr += ` --duration: ${durationValue}s;`;
+                        }
+
+                        if (currentEffect === "glitch") {
+                            htmlCode += `        <span style="${styleStr}" data-char="${wordText}">${wordText}</span>\n`;
+                        } else {
+                            htmlCode += `        <span style="${styleStr}">${wordText}</span>\n`;
+                        }
+                        animIndex++;
+
+                        if (wordIdx < words.length - 1) {
+                            htmlCode += `        <span>&nbsp;</span>\n`;
+                        }
+                    });
+                } else {
+                    lineText.split("").forEach((char) => {
+                        const delayVal = (animIndex * delayOffset).toFixed(3);
+                        const speedFactor = [0, 0.05, 0.1, 0.15, 0.1, 0.05][animIndex % 6];
+                        const durationValue = (speedValue + speedFactor).toFixed(3);
+                        const safeChar = char === " " ? "&nbsp;" : char;
+                        
+                        let styleStr = `--delay: ${delayVal}s;`;
+                        if (currentEffect === "bounce") {
+                            styleStr += ` --duration: ${durationValue}s;`;
+                        }
+
+                        if (currentEffect === "glitch") {
+                            const attrChar = char === " " ? " " : char;
+                            htmlCode += `        <span style="${styleStr}" data-char="${attrChar}">${safeChar}</span>\n`;
+                        } else {
+                            htmlCode += `        <span style="${styleStr}">${safeChar}</span>\n`;
+                        }
+                        animIndex++;
+                    });
+                }
+            }
+            htmlCode += `    </div>\n`;
+        });
+        htmlCode += `</div>`;
+
+        const fontValue = fontSelect.value;
+        const sizeValue = fontSizeRange.value;
+        const spacingValue = letterSpacingRange.value;
+        const textCol = textColor.value;
+        const primary = primaryColor.value;
+        const secondary = secondaryColor.value;
+        
+        let cssCode = `/* Google Fonts Import in CSS */\n`;
+        cssCode += `@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Cinzel+Decorative:wght@700&family=Outfit:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Rubik+Glitch&family=Space+Grotesk:wght@500;700&family=Ubuntu+Mono&display=swap');\n\n`;
+        
+        cssCode += `body {\n`;
+        cssCode += `    background-color: #090d16;\n`;
+        cssCode += `    display: flex;\n`;
+        cssCode += `    justify-content: center;\n`;
+        cssCode += `    align-items: center;\n`;
+        cssCode += `    min-height: 100vh;\n`;
+        cssCode += `    margin: 0;\n`;
+        cssCode += `    overflow: hidden;\n`;
+        cssCode += `}\n\n`;
+        
+        cssCode += `.text-display {\n`;
+        cssCode += `    font-family: ${fontValue};\n`;
+        cssCode += `    font-size: ${sizeValue}rem;\n`;
+        cssCode += `    letter-spacing: ${spacingValue}px;\n`;
+        cssCode += `    line-height: 1.4;\n`;
+        cssCode += `    display: inline-block;\n`;
+        cssCode += `    width: 100%;\n`;
+        cssCode += `}\n\n`;
+        cssCode += `.text-line {\n`;
+        cssCode += `    display: block;\n`;
+        cssCode += `    text-align: inherit;\n`;
+        cssCode += `    width: 100%;\n`;
+        cssCode += `}\n\n`;
+        cssCode += `.text-display.text-left { text-align: left; }\n`;
+        cssCode += `.text-display.text-center { text-align: center; }\n`;
+        cssCode += `.text-display.text-right { text-align: right; }\n\n`;
+
+        cssCode += `.text-display span {\n`;
+        cssCode += `    display: inline-block;\n`;
+        cssCode += `    position: relative;\n`;
+        cssCode += `    white-space: pre;\n`;
+        cssCode += `    animation-delay: var(--delay);\n`;
+        if (gradientToggle.checked) {
+            cssCode += `    background: linear-gradient(${gradAngleRange.value}deg, ${textCol}, ${textGradColor.value});\n`;
+            cssCode += `    -webkit-background-clip: text;\n`;
+            cssCode += `    background-clip: text;\n`;
+            cssCode += `    -webkit-text-fill-color: transparent;\n`;
+        }
+        cssCode += `}\n\n`;
+
+        cssCode += animationTemplates[currentEffect](primary, secondary, speedValue, textCol);
+
+        const data = {
+            title: "Premium Text Animation - OgabekHub",
+            description: "Generated using Premium Text Animation Studio",
+            html: htmlCode,
+            css: cssCode,
+            js: ""
+        };
+
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = "https://codepen.io/pen/define";
+        form.target = "_blank";
+
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "data";
+        input.value = JSON.stringify(data);
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    });
+
     // Dastlabki yuklash
+    deserializeState();
+    textDisplay.classList.add(`text-${currentAlign}`);
     updateCSSVariables();
     updateTextDisplay();
 });

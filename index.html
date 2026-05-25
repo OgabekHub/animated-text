@@ -28,6 +28,7 @@
             <!-- PREVIEW (CHAP TOMON) -->
             <section class="preview-arena" id="previewArena">
                 <div class="arena-grid"></div>
+                <canvas id="particleCanvas" class="particle-canvas"></canvas>
                 
                 <!-- Fon Boshqaruvi -->
                 <div class="arena-controls">
@@ -35,6 +36,7 @@
                     <button class="arena-btn" data-bg="light">☀️ Yorug'</button>
                     <button class="arena-btn" data-bg="grid">🏁 Katakli</button>
                     <button class="arena-btn" data-bg="mesh">🌌 Mesh</button>
+                    <button class="arena-btn" data-bg="particles">✨ Zarrachalar</button>
                 </div>
 
                 <div class="preview-wrapper">
@@ -51,7 +53,39 @@
                 <div class="panel-section">
                     <h2>Matnni O'zgartirish</h2>
                     <div class="text-input-wrapper">
-                        <input type="text" id="textInput" class="studio-input" value="HELLO! WORLD" placeholder="Matn kiriting..." maxlength="30">
+                        <textarea id="textInput" class="studio-input" rows="2" placeholder="Matn kiriting..." maxlength="150">HELLO! WORLD</textarea>
+                    </div>
+                    <div class="alignment-toolbar" id="alignmentToolbar">
+                        <button class="align-btn active" data-align="center" title="Markazda">↔️ Center</button>
+                        <button class="align-btn" data-align="left" title="Chapda">◀️ Left</button>
+                        <button class="align-btn" data-align="right" title="O'ngda">▶️ Right</button>
+                    </div>
+                </div>
+
+                <!-- Tayyor Shablonlar (Presets) -->
+                <div class="panel-section">
+                    <h2>Tayyor Shablonlar (Presets)</h2>
+                    <div class="presets-grid" id="presetsGrid">
+                        <div class="preset-card" data-preset="cyberpunk">
+                            <span class="preset-icon">👾</span>
+                            <span class="preset-name">Cyberpunk</span>
+                        </div>
+                        <div class="preset-card" data-preset="neoncyber">
+                            <span class="preset-icon">🚨</span>
+                            <span class="preset-name">Neon Cyber</span>
+                        </div>
+                        <div class="preset-card" data-preset="goldluxury">
+                            <span class="preset-icon">👑</span>
+                            <span class="preset-name">Gold Luxury</span>
+                        </div>
+                        <div class="preset-card" data-preset="sunsetwave">
+                            <span class="preset-icon">🌅</span>
+                            <span class="preset-name">Sunset Wave</span>
+                        </div>
+                        <div class="preset-card" data-preset="matrixcode">
+                            <span class="preset-icon">💻</span>
+                            <span class="preset-name">Matrix Code</span>
+                        </div>
                     </div>
                 </div>
 
@@ -136,6 +170,15 @@
                                 <option value="'Ubuntu Mono', monospace">Ubuntu Mono (Dasturchi foni)</option>
                             </select>
                         </div>
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <span>Ajratish usuli (Split Mode)</span>
+                            </div>
+                            <select id="splitSelect" class="studio-select">
+                                <option value="char" selected>Harfma-harf (Characters)</option>
+                                <option value="word">So'zma-so'z (Words)</option>
+                            </select>
+                        </div>
                         
                         <div class="setting-row">
                             <div class="setting-label">
@@ -180,10 +223,20 @@
                 <!-- Ranglar Sozlamalari -->
                 <div class="panel-section">
                     <h2>Rang Sozlamalari</h2>
+                    <div class="gradient-toggle-wrapper">
+                        <label class="studio-checkbox-label">
+                            <input type="checkbox" id="gradientToggle" class="studio-checkbox">
+                            <span>Gradient Matn</span>
+                        </label>
+                    </div>
                     <div class="color-picker-grid">
                         <div class="color-input-wrapper">
                             <input type="color" id="textColor" class="studio-color" value="#ffffff">
-                            <label for="textColor">Matn Rangi</label>
+                            <label for="textColor" id="textColorLabel">Matn Rangi</label>
+                        </div>
+                        <div class="color-input-wrapper" id="gradColorWrapper" style="display: none;">
+                            <input type="color" id="textGradColor" class="studio-color" value="#8b5cf6">
+                            <label for="textGradColor">Gradient 2-Rangi</label>
                         </div>
                         <div class="color-input-wrapper">
                             <input type="color" id="primaryColor" class="studio-color" value="#ff007f">
@@ -193,6 +246,13 @@
                             <input type="color" id="secondaryColor" class="studio-color" value="#00ffff">
                             <label for="secondaryColor">Yordamchi Rang</label>
                         </div>
+                    </div>
+                    <div class="setting-row" id="gradAngleRow" style="display: none;">
+                        <div class="setting-label">
+                            <span>Gradient Burchagi</span>
+                            <span class="setting-val" id="gradAngleVal">90°</span>
+                        </div>
+                        <input type="range" id="gradAngleRange" class="studio-range" min="0" max="360" step="5" value="90">
                     </div>
                 </div>
 
@@ -205,9 +265,17 @@
                             <button class="tab-btn" data-tab="css">CSS kod</button>
                         </div>
                         <div class="code-container">
-                            <button class="copy-btn" id="copyBtn">
-                                <span>📋 Nusxalash</span>
-                            </button>
+                            <div class="code-actions">
+                                <button class="action-btn copy-btn" id="copyBtn">
+                                    <span>📋 Nusxalash</span>
+                                </button>
+                                <button class="action-btn share-btn" id="shareBtn">
+                                    <span>🔗 Ulashish</span>
+                                </button>
+                                <button class="action-btn codepen-btn" id="codepenBtn">
+                                    <span>⚡ CodePen</span>
+                                </button>
+                            </div>
                             <pre class="code-pre"><code id="codeOutput"></code></pre>
                         </div>
                     </div>

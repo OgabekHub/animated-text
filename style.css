@@ -168,6 +168,17 @@ body::after {
     pointer-events: none;
 }
 
+.particle-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    display: none;
+}
+
 /* Fon boshqaruv tugmalari */
 .arena-controls {
     position: absolute;
@@ -231,6 +242,10 @@ body::after {
     position: relative;
     white-space: pre;
     animation-delay: var(--delay);
+    background: var(--text-background, none);
+    -webkit-background-clip: var(--text-clip, unset);
+    background-clip: var(--text-clip, unset);
+    -webkit-text-fill-color: var(--text-fill, inherit);
 }
 
 /* ==========================================
@@ -693,6 +708,66 @@ body::after {
     box-shadow: 0 0 12px rgba(139, 92, 246, 0.15);
 }
 
+textarea.studio-input {
+    resize: vertical;
+    min-height: 80px;
+    max-height: 200px;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.alignment-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.2rem;
+}
+
+.align-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.align-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+
+.align-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.text-line {
+    display: block;
+    text-align: inherit;
+    width: 100%;
+}
+
+.text-display.text-left {
+    text-align: left;
+}
+
+.text-display.text-center {
+    text-align: center;
+}
+
+.text-display.text-right {
+    text-align: right;
+}
+
 /* Animatsiya Kartalari Grid */
 .effects-grid {
     display: grid;
@@ -739,6 +814,61 @@ body::after {
 .effect-card .card-desc {
     font-size: 0.72rem;
     color: var(--text-muted);
+}
+
+/* Presets styling */
+.presets-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .presets-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .presets-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.preset-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.6rem 0.4rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.preset-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.preset-card.active {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.1);
+}
+
+.preset-icon {
+    font-size: 1.2rem;
+}
+
+.preset-name {
+    font-weight: 700;
+    font-size: 0.72rem;
+    color: var(--text-main);
 }
 
 /* Sozlamalar Elementlari */
@@ -812,16 +942,31 @@ body::after {
 }
 
 /* Rang tanlash bloki */
-.color-picker-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.8rem;
+.gradient-toggle-wrapper {
+    margin-bottom: 0.4rem;
 }
 
-@media (max-width: 480px) {
-    .color-picker-grid {
-        grid-template-columns: 1fr;
-    }
+.studio-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    user-select: none;
+}
+
+.studio-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.color-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.8rem;
 }
 
 .color-input-wrapper {
@@ -903,7 +1048,7 @@ body::after {
 }
 
 .code-pre {
-    margin: 0;
+    margin-top: 1.8rem;
     font-family: 'Ubuntu Mono', monospace;
     font-size: 0.8rem;
     color: #e2e8f0;
@@ -913,10 +1058,16 @@ body::after {
     word-break: break-all;
 }
 
-.copy-btn {
+.code-actions {
     position: absolute;
     top: 0.6rem;
     right: 0.6rem;
+    display: flex;
+    gap: 0.4rem;
+    z-index: 10;
+}
+
+.action-btn {
     background: var(--accent);
     border: none;
     color: #fff;
@@ -932,7 +1083,7 @@ body::after {
     gap: 0.3rem;
 }
 
-.copy-btn:hover {
+.action-btn:hover {
     opacity: 1;
     transform: scale(1.03);
     box-shadow: 0 0 8px var(--accent-glow);
@@ -940,6 +1091,19 @@ body::after {
 
 .copy-btn.copied {
     background: var(--success);
+}
+
+.share-btn {
+    background: #0284c7;
+}
+
+.share-btn.shared {
+    background: var(--success);
+}
+
+.codepen-btn {
+    background: #1e1b4b;
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* Toast xabar */
