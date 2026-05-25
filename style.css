@@ -28,6 +28,9 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+body, input, textarea, select, button {
     font-family: 'Outfit', sans-serif;
 }
 
