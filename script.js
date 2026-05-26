@@ -714,6 +714,7 @@ document.addEventListener("DOMContentLoaded", () => {
         textDisplay.className = `text-display effect-${currentEffect} text-${currentAlign}`;
 
         // Trigger updates
+        syncCustomSelects();
         updateCSSVariables();
         updateTextDisplay();
     }
@@ -792,9 +793,130 @@ document.addEventListener("DOMContentLoaded", () => {
 
             // Preview alignment & effect update
             textDisplay.className = `text-display effect-${currentEffect} text-${currentAlign}`;
+            syncCustomSelects();
         } catch (e) {
             console.error("State deserialization failed", e);
         }
+    }
+
+    // Custom Select Dropdowns Helper Functions
+    function initializeCustomSelects() {
+        const selects = document.querySelectorAll(".studio-select");
+        selects.forEach(select => {
+            // Check if wrapper already exists to prevent duplicate initialization
+            if (select.closest(".custom-select-container")) return;
+
+            // Create custom select wrapper
+            const wrapper = document.createElement("div");
+            wrapper.className = "custom-select-container";
+            
+            // Hide the original select
+            select.style.display = "none";
+            select.parentNode.insertBefore(wrapper, select);
+            wrapper.appendChild(select); // Move select inside wrapper for layout grouping
+            
+            // Create custom trigger
+            const trigger = document.createElement("div");
+            trigger.className = "custom-select-trigger";
+            
+            const triggerText = document.createElement("span");
+            triggerText.className = "custom-select-text";
+            triggerText.innerText = select.options[select.selectedIndex].text;
+            
+            const arrow = document.createElement("span");
+            arrow.className = "custom-select-arrow";
+            arrow.innerHTML = `<svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+            
+            trigger.appendChild(triggerText);
+            trigger.appendChild(arrow);
+            wrapper.appendChild(trigger);
+            
+            // Create custom options container
+            const optionsContainer = document.createElement("div");
+            optionsContainer.className = "custom-options-container";
+            
+            // Populate options
+            Array.from(select.options).forEach(option => {
+                const customOption = document.createElement("div");
+                customOption.className = "custom-option";
+                if (option.selected) customOption.classList.add("selected");
+                customOption.dataset.value = option.value;
+                customOption.innerText = option.text;
+                
+                // Set option font preview if it's the font select!
+                if (select.id === "fontSelect") {
+                    customOption.style.fontFamily = option.value;
+                }
+                
+                customOption.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    
+                    // Update selected option styling
+                    optionsContainer.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("selected"));
+                    customOption.classList.add("selected");
+                    
+                    // Update trigger text
+                    triggerText.innerText = option.text;
+                    
+                    // Update original select value
+                    select.value = option.value;
+                    
+                    // Trigger change event on original select
+                    const event = new Event("change", { bubbles: true });
+                    select.dispatchEvent(event);
+                    
+                    // Close dropdown
+                    wrapper.classList.remove("open");
+                });
+                
+                optionsContainer.appendChild(customOption);
+            });
+            
+            wrapper.appendChild(optionsContainer);
+            
+            // Toggle dropdown open/close
+            trigger.addEventListener("click", (e) => {
+                e.stopPropagation();
+                
+                // Close all other dropdowns
+                document.querySelectorAll(".custom-select-container").forEach(c => {
+                    if (c !== wrapper) c.classList.remove("open");
+                });
+                
+                wrapper.classList.toggle("open");
+            });
+        });
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener("click", () => {
+            document.querySelectorAll(".custom-select-container").forEach(c => {
+                c.classList.remove("open");
+            });
+        });
+    }
+
+    function syncCustomSelects() {
+        const selects = document.querySelectorAll(".studio-select");
+        selects.forEach(select => {
+            const wrapper = select.closest(".custom-select-container");
+            if (!wrapper) return;
+            
+            const triggerText = wrapper.querySelector(".custom-select-text");
+            const options = wrapper.querySelectorAll(".custom-option");
+            
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption) {
+                triggerText.innerText = selectedOption.text;
+                
+                options.forEach(opt => {
+                    if (opt.dataset.value === select.value) {
+                        opt.classList.add("selected");
+                    } else {
+                        opt.classList.remove("selected");
+                    }
+                });
+            }
+        });
     }
 
     // Zarrachalar animatsiya tizimi
@@ -1359,6 +1481,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Dastlabki yuklash
+    initializeCustomSelects();
     deserializeState();
     textDisplay.classList.add(`text-${currentAlign}`);
     updateCSSVariables();

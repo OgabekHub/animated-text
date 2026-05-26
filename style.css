@@ -1092,6 +1092,113 @@ textarea.studio-input {
     border-color: var(--accent);
 }
 
+/* Custom Select Dropdown Premium Styling */
+.custom-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background: rgba(9, 13, 22, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+}
+
+.custom-select-trigger:hover {
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.1);
+}
+
+.custom-select-container.open .custom-select-trigger {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
+}
+
+.custom-select-arrow {
+    display: flex;
+    align-items: center;
+    transition: transform 0.3s ease;
+    color: var(--text-muted);
+}
+
+.custom-select-container.open .custom-select-arrow {
+    transform: rotate(180deg);
+    color: var(--accent);
+}
+
+.custom-options-container {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    right: 0;
+    background: rgba(9, 13, 22, 0.95);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0.4rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(139, 92, 246, 0.05);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+    max-height: 250px;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.custom-select-container.open .custom-options-container {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.custom-option {
+    padding: 0.7rem 0.9rem;
+    color: var(--text-muted);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.custom-option:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    padding-left: 1.15rem;
+}
+
+.custom-option.selected {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--accent);
+    font-weight: bold;
+    border-left: 3px solid var(--accent);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.custom-options-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-options-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-options-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+}
+
 /* Rang tanlash bloki */
 .gradient-toggle-wrapper {
     margin-bottom: 0.4rem;
