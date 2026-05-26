@@ -1341,7 +1341,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let htmlCode = `<!-- Google Fonts Import (HTML) -->\n`;
         htmlCode += `<link rel="preconnect" href="https://fonts.googleapis.com">\n`;
         htmlCode += `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n`;
-        htmlCode += `<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Cinzel+Decorative:wght@700&family=Outfit:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Rubik+Glitch&family=Space+Grotesk:wght@500;700&family=Ubuntu+Mono&display=swap" rel="stylesheet">\n\n`;
+        htmlCode += `<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Cinzel+Decorative:wght@700&family=Orbitron:wght@700;900&family=Outfit:wght@400;700&family=Pacifico&family=Playfair+Display:ital,wght@0,700;1,700&family=Press+Start+2P&family=Rubik+Glitch&family=Space+Grotesk:wght@500;700&family=Syne:wght@700;800&family=Ubuntu+Mono&display=swap" rel="stylesheet">\n\n`;
         htmlCode += `<div class="text-display effect-${currentEffect} text-${currentAlign}">\n`;
         
         const lines = text.split("\n");
@@ -1412,7 +1412,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const secondary = secondaryColor.value;
         
         let cssCode = `/* Google Fonts Import in CSS */\n`;
-        cssCode += `@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Cinzel+Decorative:wght@700&family=Outfit:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,700&family=Rubik+Glitch&family=Space+Grotesk:wght@500;700&family=Ubuntu+Mono&display=swap');\n\n`;
+        cssCode += `@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Cinzel+Decorative:wght@700&family=Orbitron:wght@700;900&family=Outfit:wght@400;700&family=Pacifico&family=Playfair+Display:ital,wght@0,700;1,700&family=Press+Start+2P&family=Rubik+Glitch&family=Space+Grotesk:wght@500;700&family=Syne:wght@700;800&family=Ubuntu+Mono&display=swap');\n\n`;
         
         cssCode += `body {\n`;
         cssCode += `    background-color: #090d16;\n`;
