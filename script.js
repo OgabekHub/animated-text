@@ -23,6 +23,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const gradAngleRow = document.getElementById("gradAngleRow");
     const gradAngleVal = document.getElementById("gradAngleVal");
     const previewArena = document.getElementById("previewArena");
+    const previewWrapper = document.querySelector(".preview-wrapper");
+    
+    // Yangi Elementlar (Video Eksport, Randomizer va Zarrachalar sozlamalari)
+    const randomBtn = document.getElementById("randomBtn");
+    const recordBtn = document.getElementById("recordBtn");
+    const stopRecordBtn = document.getElementById("stopRecordBtn");
+    const recordOverlay = document.getElementById("recordOverlay");
+    const recordTimer = document.getElementById("recordTimer");
+    
+    const particleSettingsSection = document.getElementById("particleSettingsSection");
+    const particleCountRange = document.getElementById("particleCountRange");
+    const particleCountVal = document.getElementById("particleCountVal");
+    const particleSpeedRange = document.getElementById("particleSpeedRange");
+    const particleSpeedVal = document.getElementById("particleSpeedVal");
+    const particleDistRange = document.getElementById("particleDistRange");
+    const particleDistVal = document.getElementById("particleDistVal");
+    const particleInteractSelect = document.getElementById("particleInteractSelect");
     
     // Kod Eksport & Tabs
     const codeOutput = document.getElementById("codeOutput");
@@ -48,6 +65,15 @@ document.addEventListener("DOMContentLoaded", () => {
     let particles = [];
     let particleAnimId = null;
     let isParticleActive = false;
+    
+    // Sichqoncha va Sensor koordinatasi (3D tilt va zarrachalar o'zaro ta'siri uchun)
+    let mouse = { x: null, y: null, radius: 120 };
+    
+    // Video yozib olish holatlari
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recordStartTime = null;
+    let recordTimerInterval = null;
 
     // CSS animatsiyalar shablonlari (Eksport qilish uchun)
     const animationTemplates = {
@@ -938,9 +964,27 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         update() {
-            this.x += this.vx;
-            this.y += this.vy;
+            const speedMult = parseFloat(particleSpeedRange.value);
+            const interactMode = particleInteractSelect.value;
             
+            // Sichqoncha orqali itarish (Repel) kuchi
+            if (mouse.x !== null && mouse.y !== null && interactMode === "repel") {
+                const dx = this.x - mouse.x;
+                const dy = this.y - mouse.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < mouse.radius) {
+                    const force = (mouse.radius - dist) / mouse.radius;
+                    const angle = Math.atan2(dy, dx);
+                    // Zarrachani itarish
+                    this.x += Math.cos(angle) * force * 4.5 * speedMult;
+                    this.y += Math.sin(angle) * force * 4.5 * speedMult;
+                }
+            }
+
+            this.x += this.vx * speedMult;
+            this.y += this.vy * speedMult;
+            
+            // Ekrandan chiqsa qayta joylash
             if (this.x < 0 || this.x > this.width || this.y < 0 || this.y > this.height) {
                 this.reset();
             }
@@ -961,7 +1005,8 @@ document.addEventListener("DOMContentLoaded", () => {
         ctx = particleCanvas.getContext("2d");
         resizeCanvas();
         particles = [];
-        for (let i = 0; i < 70; i++) {
+        const count = parseInt(particleCountRange.value);
+        for (let i = 0; i < count; i++) {
             particles.push(new Particle(particleCanvas.width, particleCanvas.height));
         }
         isParticleActive = true;
@@ -976,12 +1021,26 @@ document.addEventListener("DOMContentLoaded", () => {
         particleCanvas.height = rect.height;
     }
 
+    function updateParticleCount() {
+        if (!isParticleActive) return;
+        const targetCount = parseInt(particleCountRange.value);
+        if (particles.length < targetCount) {
+            while (particles.length < targetCount) {
+                particles.push(new Particle(particleCanvas.width, particleCanvas.height));
+            }
+        } else if (particles.length > targetCount) {
+            particles.splice(targetCount);
+        }
+    }
+
     function animateParticles() {
         if (!isParticleActive) return;
         
         ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
         
-        // Zarrachalarni o'zaro bog'lash chiziqlari (Constellation)
+        const connectDist = parseFloat(particleDistRange.value);
+        const interactMode = particleInteractSelect.value;
+        
         ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
         ctx.lineWidth = 0.5;
         
@@ -989,15 +1048,36 @@ document.addEventListener("DOMContentLoaded", () => {
             particles[i].update();
             particles[i].draw(ctx);
             
+            // Sichqonchani tutish (Grab/Connect) rejimi
+            if (mouse.x !== null && mouse.y !== null && interactMode === "grab") {
+                const dx = particles[i].x - mouse.x;
+                const dy = particles[i].y - mouse.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < mouse.radius + 20) {
+                    ctx.save();
+                    const alpha = (1 - dist / (mouse.radius + 20)) * 0.15;
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(mouse.x, mouse.y);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+            
             for (let j = i + 1; j < particles.length; j++) {
                 const dx = particles[i].x - particles[j].x;
                 const dy = particles[i].y - particles[j].y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 100) {
+                if (connectDist > 0 && dist < connectDist) {
+                    ctx.save();
+                    const alpha = (1 - dist / connectDist) * 0.06;
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
                     ctx.beginPath();
                     ctx.moveTo(particles[i].x, particles[i].y);
                     ctx.lineTo(particles[j].x, particles[j].y);
                     ctx.stroke();
+                    ctx.restore();
                 }
             }
         }
@@ -1280,6 +1360,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 previewArena.style.backgroundImage = "none";
                 initParticles();
             }
+
+            // Toggle Particle settings panel visibility
+            if (arenaBackground === "particles") {
+                particleSettingsSection.style.display = "block";
+            } else {
+                particleSettingsSection.style.display = "none";
+            }
         });
     });
 
@@ -1478,6 +1565,216 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
+    });
+
+    // Zarrachalar sozlamalari hodisalari
+    particleCountRange.addEventListener("input", () => {
+        particleCountVal.innerText = particleCountRange.value;
+        updateParticleCount();
+    });
+    particleSpeedRange.addEventListener("input", () => {
+        particleSpeedVal.innerText = particleSpeedRange.value;
+    });
+    particleDistRange.addEventListener("input", () => {
+        particleDistVal.innerText = `${particleDistRange.value}px`;
+    });
+
+    // Sichqoncha va sensor hodisalari (3D Parallax Tilt va koordinatalarni saqlash)
+    function handleMouseMove(clientX, clientY) {
+        const rect = previewArena.getBoundingClientRect();
+        mouse.x = clientX - rect.left;
+        mouse.y = clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        // Maksimal og'ish burchagi (12 daraja)
+        const rotateY = ((mouse.x - centerX) / centerX) * 12;
+        const rotateX = -((mouse.y - centerY) / centerY) * 12;
+        
+        previewWrapper.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        
+        // Soya siljishlari (CSS custom variable orqali)
+        const shadowX = -((mouse.x - centerX) / centerX) * 8;
+        const shadowY = -((mouse.y - centerY) / centerY) * 8;
+        document.documentElement.style.setProperty("--shadow-offset-x", `${shadowX}px`);
+        document.documentElement.style.setProperty("--shadow-offset-y", `${shadowY}px`);
+    }
+    
+    previewArena.addEventListener("mousemove", (e) => {
+        handleMouseMove(e.clientX, e.clientY);
+    });
+    
+    previewArena.addEventListener("touchmove", (e) => {
+        if (e.touches.length > 0) {
+            handleMouseMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+    }, { passive: true });
+    
+    function reset3DTilt() {
+        mouse.x = null;
+        mouse.y = null;
+        previewWrapper.style.transition = "transform 0.4s ease";
+        previewWrapper.style.transform = "rotateX(0deg) rotateY(0deg)";
+        
+        document.documentElement.style.setProperty("--shadow-offset-x", "0px");
+        document.documentElement.style.setProperty("--shadow-offset-y", "0px");
+        
+        setTimeout(() => {
+            previewWrapper.style.transition = "transform 0.1s ease-out";
+        }, 400);
+    }
+    
+    previewArena.addEventListener("mouseleave", reset3DTilt);
+    previewArena.addEventListener("touchend", reset3DTilt);
+
+    // Tasodifiy dizayn generatori (Randomizer)
+    randomBtn.addEventListener("click", () => {
+        clearActivePresets();
+        
+        // 1. Tasodifiy animatsiya effekti
+        const effects = Array.from(document.querySelectorAll(".effect-card")).map(c => c.dataset.effect);
+        currentEffect = effects[Math.floor(Math.random() * effects.length)];
+        
+        // 2. Tasodifiy shrift
+        const fontOptions = Array.from(fontSelect.options).map(o => o.value);
+        fontSelect.value = fontOptions[Math.floor(Math.random() * fontOptions.length)];
+        
+        // 3. Tasodifiy split rejimi
+        splitSelect.value = Math.random() > 0.4 ? "char" : "word";
+        
+        // 4. Tasodifiy o'lcham va oraliq
+        fontSizeRange.value = (Math.random() * (6.0 - 2.5) + 2.5).toFixed(1);
+        letterSpacingRange.value = Math.floor(Math.random() * 16 - 2);
+        
+        // 5. Tasodifiy tezlik va delay
+        speedRange.value = (Math.random() * (1.5 - 0.3) + 0.3).toFixed(2);
+        delayRange.value = (Math.random() * (0.18 - 0.03) + 0.03).toFixed(2);
+        
+        // 6. Tasodifiy ranglar
+        const randomColor = () => "#" + Math.floor(Math.random() * 16777215).toString(16).padStart(6, "0");
+        textColor.value = randomColor();
+        primaryColor.value = randomColor();
+        secondaryColor.value = randomColor();
+        
+        // 7. Tasodifiy gradient
+        gradientToggle.checked = Math.random() > 0.5;
+        textGradColor.value = randomColor();
+        gradAngleRange.value = Math.floor(Math.random() * 73) * 5; // 0-360 deg
+        
+        // Effect active card UI yangilash
+        document.querySelectorAll(".effect-card").forEach(c => {
+            if (c.dataset.effect === currentEffect) c.classList.add("active");
+            else c.classList.remove("active");
+        });
+        
+        // Preview yangilash
+        textDisplay.className = `text-display effect-${currentEffect} text-${currentAlign}`;
+        
+        syncCustomSelects();
+        updateCSSVariables();
+        updateTextDisplay();
+    });
+
+    // Video yozib olish (Screen Recorder)
+    async function startVideoRecording() {
+        try {
+            // Yozish rejimini faollashtirish (UI-ni tozalaydi)
+            document.body.classList.add("recording-active");
+            
+            // Canvasni oyna o'lchamiga to'liq to'g'irlash
+            if (isParticleActive) resizeCanvas();
+            
+            // Capturing tab stream
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    displaySurface: "browser",
+                    logicalSurface: true
+                },
+                audio: false,
+                preferCurrentTab: true
+            });
+            
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=vp9" });
+            
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) {
+                    recordedChunks.push(e.data);
+                }
+            };
+            
+            mediaRecorder.onstop = () => {
+                stopVideoRecording(true);
+            };
+            
+            mediaRecorder.start();
+            
+            // Overlay ko'rsatish va timer ishga tushirish
+            recordOverlay.classList.add("show");
+            recordStartTime = Date.now();
+            recordTimerInterval = setInterval(updateRecordTimer, 1000);
+            
+            // Stream yopilsa avtomatik to'xtatish (masalan: brauzerning "Stop sharing" tugmasi bosilganda)
+            stream.getVideoTracks()[0].onended = () => {
+                if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                    mediaRecorder.stop();
+                }
+            };
+            
+        } catch (err) {
+            console.error("Video yozishni boshlashda xato:", err);
+            // UI tiklash
+            document.body.classList.remove("recording-active");
+            if (isParticleActive) resizeCanvas();
+            alert("Video yozishni boshlash bekor qilindi yoki xatolik yuz berdi.");
+        }
+    }
+    
+    function updateRecordTimer() {
+        const diff = Date.now() - recordStartTime;
+        const sec = Math.floor(diff / 1000) % 60;
+        const min = Math.floor(diff / 60000);
+        recordTimer.innerText = `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    }
+    
+    function stopVideoRecording(isSuccessful = false) {
+        clearInterval(recordTimerInterval);
+        recordOverlay.classList.remove("show");
+        document.body.classList.remove("recording-active");
+        
+        if (isParticleActive) resizeCanvas();
+        
+        if (isSuccessful && recordedChunks.length > 0) {
+            const blob = new Blob(recordedChunks, { type: "video/webm" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `premium-text-animatsiya-${Date.now()}.webm`;
+            a.click();
+            
+            // Toast xabar
+            toastMsg.innerHTML = "<span>✅</span> Video muvaffaqiyatli yuklab olindi!";
+            toastMsg.classList.add("show");
+            setTimeout(() => {
+                toastMsg.classList.remove("show");
+                toastMsg.innerHTML = "<span>✅</span> Kod nusxalandi!";
+            }, 3000);
+        }
+        
+        // Streamni to'xtatish
+        if (mediaRecorder && mediaRecorder.stream) {
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+        
+        mediaRecorder = null;
+    }
+    
+    recordBtn.addEventListener("click", startVideoRecording);
+    stopRecordBtn.addEventListener("click", () => {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+        }
     });
 
     // Dastlabki yuklash
